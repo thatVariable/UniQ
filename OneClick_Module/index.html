@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dataset Analyzer</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Dataset Analyzer</h1>
+        
+        <div id="datasetInfo"></div>
+        
+        <form id="uploadForm" enctype="multipart/form-data">
+            <h2>Upload Dataset</h2>
+            <input type="file" id="datasetFile" name="file" accept=".csv,.xlsx,.xls" required>
+            <button type="submit">Upload</button>
+        </form>
+        
+        <div class="analysis-section">
+            <h2>Quick Analysis</h2>
+            <div class="button-group">
+                <button onclick="analyze('summary')">Summary Stats</button>
+                <button onclick="analyze('head')">Show First Rows</button>
+                <button onclick="analyze('columns')">List Columns</button>
+                <button onclick="analyze('missing')">Missing Values</button>
+                <button onclick="analyze('dtypes')">Data Types</button>
+                <button onclick="analyze('correlation')">Correlation Matrix</button>
+            </div>
+            
+            <div class="visualization-section">
+                <h2>Visualizations</h2>
+                <select id="columnSelect"></select>
+                <div class="button-group">
+                    <button onclick="visualize('histogram')">Histogram</button>
+                    <button onclick="visualize('boxplot')">Box Plot</button>
+                    <button onclick="visualize('scatter')">Scatter Plot</button>
+                    <button onclick="visualize('value_counts')">Value Counts</button>
+                </div>
+            </div>
+            
+            <div id="results">
+                <h3>Results</h3>
+                <div id="resultContent">No dataset to analyze</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentColumns = [];
+        
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('datasetFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                if (result.error) {
+                    alert(result.error);
+                } else {
+                    // Update dataset info
+                    document.getElementById('datasetInfo').innerHTML = `
+                        <div class="dataset-info">
+                            <h3>Current Dataset: ${file.name}</h3>
+                            <p>Shape: ${result.shape[0]} rows × ${result.shape[1]} columns</p>
+                        </div>
+                    `;
+                    
+                    // Update column dropdown
+                    currentColumns = result.columns;
+                    const columnSelect = document.getElementById('columnSelect');
+                    columnSelect.innerHTML = '';
+                    currentColumns.forEach(col => {
+                        const option = document.createElement('option');
+                        option.value = col;
+                        option.textContent = col;
+                        columnSelect.appendChild(option);
+                    });
+                    
+                    document.getElementById('resultContent').innerHTML = "Dataset ready for analysis";
+                }
+            } catch (error) {
+                alert('Error uploading file: ' + error.message);
+            }
+        });
+        
+        async function analyze(action) {
+            try {
+                const response = await fetch(`/analyze?action=${action}`);
+                const result = await response.json();
+                displayResult(result);
+            } catch (error) {
+                document.getElementById('resultContent').innerHTML = 
+                    `<div class="error">Error during analysis: ${error.message}</div>`;
+            }
+        }
+        
+        async function visualize(action) {
+            const column = document.getElementById('columnSelect').value;
+            if (!column) {
+                alert('Please select a column first');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/analyze?action=${action}&column=${encodeURIComponent(column)}`);
+                const result = await response.json();
+                displayResult(result);
+            } catch (error) {
+                document.getElementById('resultContent').innerHTML = 
+                    `<div class="error">Error during visualization: ${error.message}</div>`;
+            }
+        }
+        
+        function displayResult(result) {
+            const resultDiv = document.getElementById('resultContent');
+            
+            if (result.error) {
+                resultDiv.innerHTML = `<div class="error">${result.error}</div>`;
+                return;
+            }
+            
+            if (typeof result.result === 'string' && result.result.startsWith('data:image/png')) {
+                // This is a base64 encoded image
+                resultDiv.innerHTML = `<img src="${result.result}" style="max-width:100%; margin-top:20px;">`;
+            } else if (typeof result.result === 'string') {
+                // HTML table
+                resultDiv.innerHTML = result.result;
+            } else if (Array.isArray(result.result)) {
+                // List of items
+                resultDiv.innerHTML = `<ul>${result.result.map(item => `<li>${item}</li>`).join('')}</ul>`;
+            } else {
+                // JSON object
+                resultDiv.innerHTML = `<pre>${JSON.stringify(result.result, null, 2)}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

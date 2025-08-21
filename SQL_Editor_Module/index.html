@@ -1,0 +1,119 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Analysis Platform</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <h1>Data Analysis Platform</h1>
+      </div>
+      <nav class="nav" aria-label="Main">
+        <a href="#" class="nav-link active" data-tab="sql-editor">📝 SQL Editor</a>
+        <a href="#" class="nav-link" data-tab="data-analyzer">📊 Data Analyzer</a>
+        <a href="#" class="nav-link" data-tab="upload-data">📤 Upload Data</a>
+      </nav>
+      <p class="hint">
+        This platform integrates SQL query execution, dataset analysis, and data visualization in one place.
+      </p>
+    </aside>
+
+    <!-- Content -->
+    <main class="content">
+      <!-- SQL Editor Tab -->
+      <div class="tab-content active" id="sql-editor">
+        <div class="header">
+          <div class="title">SQL Command Editor</div>
+          <div class="toolbar">
+            <button class="btn primary" id="runBtn">Run (Ctrl/⌘+Enter)</button>
+            <button class="btn" id="formatBtn" title="Simple formatting">Format</button>
+            <button class="btn ghost" id="clearBtn">Clear</button>
+          </div>
+        </div>
+
+        <section class="editor-card" role="region" aria-label="SQL Editor">
+          <div class="editor-header">
+            <span class="label">Query.sql</span>
+            <span class="label" id="lengthInfo">0 chars</span>
+          </div>
+          <textarea id="sql" class="editor" spellcheck="false" placeholder="-- Write your SQL here\nSELECT * FROM uploaded_data;\n"></textarea>
+          <div class="bottom">
+            <span class="status" id="status">Ready</span>
+          </div>
+        </section>
+
+        <section>
+          <h3 style="margin:6px 0 8px 0">Output Console</h3>
+          <div class="console" id="console" aria-live="polite">No output yet.</div>
+        </section>
+      </div>
+
+      <!-- Data Analyzer Tab -->
+      <div class="tab-content" id="data-analyzer">
+        <div class="header">
+          <div class="title">Dataset Analyzer</div>
+        </div>
+        
+        <div id="datasetInfo"></div>
+        
+        <div class="analysis-section">
+          <h2>Quick Analysis</h2>
+          <div class="button-group">
+            <button class="btn" onclick="analyze('summary')">Summary Stats</button>
+            <button class="btn" onclick="analyze('head')">Show First Rows</button>
+            <button class="btn" onclick="analyze('columns')">List Columns</button>
+            <button class="btn" onclick="analyze('missing')">Missing Values</button>
+            <button class="btn" onclick="analyze('dtypes')">Data Types</button>
+            <button class="btn" onclick="analyze('correlation')">Correlation Matrix</button>
+          </div>
+          
+          <div class="visualization-section">
+            <h2>Visualizations</h2>
+            <select id="columnSelect"></select>
+            <div class="button-group">
+              <button class="btn" onclick="visualize('histogram')">Histogram</button>
+              <button class="btn" onclick="visualize('boxplot')">Box Plot</button>
+              <button class="btn" onclick="visualize('scatter')">Scatter Plot</button>
+              <button class="btn" onclick="visualize('value_counts')">Value Counts</button>
+            </div>
+          </div>
+          
+          <div id="results">
+            <h3>Results</h3>
+            <div id="resultContent">No dataset to analyze</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Data Tab -->
+      <div class="tab-content" id="upload-data">
+        <div class="header">
+          <div class="title">Upload Dataset</div>
+        </div>
+        
+        <form id="uploadForm" enctype="multipart/form-data" class="upload-form">
+          <div class="form-group">
+            <label for="datasetFile">Select a CSV or Excel file:</label>
+            <input type="file" id="datasetFile" name="file" accept=".csv,.xlsx,.xls" required>
+          </div>
+          <button type="submit" class="btn primary">Upload Dataset</button>
+        </form>
+        
+        <div id="uploadResults">
+          <h3>Upload Status</h3>
+          <div id="uploadStatus">No file uploaded yet.</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
